@@ -1,11 +1,10 @@
-
+import MyDocument from "./components/MyComponent"
 
 function App() {
 
+
   return (
-    <>
-      hi
-    </>
+    <MyDocument />
   )
 }
 
