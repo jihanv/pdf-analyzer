@@ -3,8 +3,11 @@ import pdfToText from "react-pdftotext";
 import { stopwords } from "../lib/stopwords.json";
 
 export default function MyComponent() {
+
+    // Variables
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
+    const uniqueWords = Object.keys(wordCounts).length;
 
     function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
@@ -77,11 +80,18 @@ export default function MyComponent() {
                 onClick={extractText}
                 disabled={!selectedFile}
             >
-                Process PDF
+                {selectedFile ? (
+                    <>Process <strong>{selectedFile.name}</strong></>
+                ) : (
+                    "Process PDF"
+                )}
             </button>
 
             <div className="results">
-                {Object.keys(wordCounts).length === 0 ? (
+                {uniqueWords > 0 && (
+                    <p><strong>Unique words:</strong> {uniqueWords}</p>
+                )}
+                {uniqueWords === 0 ? (
                     "No data yet."
                 ) : (
                     Object.entries(wordCounts)
