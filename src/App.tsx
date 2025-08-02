@@ -1,10 +1,10 @@
-import MyDocument from "./components/MyComponent"
+import MyComponent from "./components/MyComponent"
 
 function App() {
 
 
   return (
-    <MyDocument />
+    <MyComponent />
   )
 }
 

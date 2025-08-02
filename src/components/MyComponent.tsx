@@ -3,15 +3,25 @@ import pdfToText from "react-pdftotext";
 import { stopwords } from "../lib/stopwords.json"; // <-- adjust path as needed
 
 export default function MyComponent() {
+
+    // States
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-    async function extractText(event: React.ChangeEvent<HTMLInputElement>) {
+    // Functions
+
+    function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
-        if (!files || files.length === 0) return;
+        if (files && files.length > 0) {
+            setSelectedFile(files[0]);
+        }
+    }
 
-        const file = files[0];
+    async function extractText() {
+        if (!selectedFile) return; // No file selected yet
+
         try {
-            let text = await pdfToText(file);
+            let text = await pdfToText(selectedFile);
 
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
@@ -35,9 +45,12 @@ export default function MyComponent() {
     return (
         <div className="app">
             <header className="App-header">
-                <input type="file" accept="application/pdf" onChange={extractText} />
+                <input type="file" accept="application/pdf" onChange={handleFileSelect} />
+                <button onClick={extractText} disabled={!selectedFile}>
+                    Process PDF
+                </button>
             </header>
-            <div className="pdf-content" style={{ marginTop: "20px", maxHeight: "400px", overflowY: "auto" }}>
+            <div className="pdf-content">
                 {Object.keys(wordCounts).length === 0 ? (
                     "No data yet."
                 ) : (
