@@ -17,6 +17,18 @@ export default function MyComponent() {
         }
     }
 
+    function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        if (files && files.length > 0) {
+            setSelectedFile(files[0]);
+        }
+    }
+
+    function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+        event.preventDefault(); // Needed so drop works
+    }
+
     async function extractText() {
         if (!selectedFile) return; // No file selected yet
 
@@ -45,6 +57,19 @@ export default function MyComponent() {
     return (
         <div className="app">
             <header className="App-header">
+                <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    style={{
+                        border: "2px dashed #ccc",
+                        padding: "20px",
+                        textAlign: "center",
+                        marginBottom: "10px",
+                        cursor: "pointer"
+                    }}
+                >
+                    Drag & Drop PDF here
+                </div>
                 <input type="file" accept="application/pdf" onChange={handleFileSelect} />
                 <button onClick={extractText} disabled={!selectedFile}>
                     Process PDF
