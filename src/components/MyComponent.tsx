@@ -36,7 +36,7 @@ export default function MyComponent() {
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
             words = words.filter(
-                word => !stopwords.includes(word) && !/^\d+$/.test(word) && word.length > 2
+                word => !stopwords.includes(word) && !/^\d+$/.test(word) && word.length > 3
             );
 
             const wordCount: Record<string, number> = {};
@@ -98,7 +98,7 @@ export default function MyComponent() {
                         .sort((a, b) => b[1] - a[1])
                         .map(([word, count]) => (
                             <p key={word}>
-                                {word}: {count}
+                                {word}, {count}
                             </p>
                         ))
                 )}
