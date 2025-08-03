@@ -7,7 +7,7 @@ export default function MyComponent() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
-    const [dictionary, setDictionary] = useState<string[]>([]);
+    const [dictionary, setDictionary] = useState<Set<string>>(new Set());
     const uniqueWords = Object.keys(wordCounts).length;
 
     // Preload dictionary when component mounts
@@ -17,7 +17,7 @@ export default function MyComponent() {
                 const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
                 if (!response.ok) throw new Error("Failed to load dictionary");
                 const data = await response.json();
-                setDictionary(data.dictionary);
+                setDictionary(new Set(data.dictionary)); // <-- store as Set for fast lookups
             } catch (err) {
                 console.error("Failed to load dictionary:", err);
             }
@@ -41,7 +41,7 @@ export default function MyComponent() {
     }
 
     async function extractText() {
-        if (!selectedFile || dictionary.length === 0) return;
+        if (!selectedFile || dictionary.size === 0) return;
         setLoading(true);
 
         try {
@@ -53,7 +53,7 @@ export default function MyComponent() {
             words = words.filter(
                 word =>
                     !stopwords.includes(word) &&
-                    dictionary.includes(word) &&
+                    dictionary.has(word) &&           // <-- Set lookup for speed
                     !/^\d+$/.test(word) &&
                     word.length > 3
             );
@@ -99,7 +99,7 @@ export default function MyComponent() {
             <button
                 className="process-btn"
                 onClick={extractText}
-                disabled={!selectedFile || loading || dictionary.length === 0}
+                disabled={!selectedFile || loading || dictionary.size === 0}
             >
                 {loading
                     ? "Processing..."
@@ -113,11 +113,46 @@ export default function MyComponent() {
                 {uniqueWords === 0 && !loading ? (
                     "No data yet."
                 ) : (
-                    Object.entries(wordCounts).map(([word, count]) => (
-                        <p key={word}>{word}, {count}</p>
-                    ))
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
+                        <thead>
+                            <tr>
+                                <th style={{ textAlign: "left", borderBottom: "2px solid #ccc", padding: "8px" }}>Word</th>
+                                <th style={{ textAlign: "right", borderBottom: "2px solid #ccc", padding: "8px" }}>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.entries(wordCounts).map(([word, count], index) => (
+                                <tr
+                                    key={word}
+                                    style={{
+                                        backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff"
+                                    }}
+                                >
+                                    <td style={{ padding: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <button
+                                            style={{
+                                                padding: "2px 6px",
+                                                fontSize: "0.8rem",
+                                                cursor: "pointer",
+                                                background: "#007bff",
+                                                color: "white",
+                                                border: "none",
+                                                borderRadius: "3px"
+                                            }}
+                                            onClick={() => console.log(`Lookup: ${word}`)}
+                                        >
+                                            Lookup
+                                        </button>
+                                        <span>{word}</span>
+                                    </td>
+                                    <td style={{ padding: "8px", textAlign: "right" }}>{count}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
+
         </div>
     );
 }
