@@ -1,5 +1,4 @@
 import { useState } from "react";
-import pdfToText from "react-pdftotext";
 import { stopwords } from "../lib/stopwords.json";
 
 export default function MyComponent() {
@@ -32,6 +31,10 @@ export default function MyComponent() {
         if (!selectedFile) return;
 
         try {
+            // Lazy load library
+
+            const pdfToText = (await import("react-pdftotext")).default;
+
             let text = await pdfToText(selectedFile);
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
