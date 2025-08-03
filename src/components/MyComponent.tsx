@@ -3,21 +3,22 @@ import stopwordsJson from "../lib/stopwords.json";
 const stopwords: string[] = stopwordsJson.stopwords;
 
 export default function MyComponent() {
-    // Variables
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
     const [dictionary, setDictionary] = useState<Set<string>>(new Set());
+    const [expandedWord, setExpandedWord] = useState<string | null>(null);
+    const [lookupData, setLookupData] = useState<Record<string, string[]>>({});
+    const [lookupLoading, setLookupLoading] = useState(false);
     const uniqueWords = Object.keys(wordCounts).length;
 
-    // Preload dictionary when component mounts
     useEffect(() => {
         async function loadDictionary() {
             try {
                 const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
                 if (!response.ok) throw new Error("Failed to load dictionary");
                 const data = await response.json();
-                setDictionary(new Set(data.dictionary)); // <-- store as Set for fast lookups
+                setDictionary(new Set(data.dictionary));
             } catch (err) {
                 console.error("Failed to load dictionary:", err);
             }
@@ -25,19 +26,36 @@ export default function MyComponent() {
         loadDictionary();
     }, []);
 
-    function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
-        const files = event.target.files;
-        if (files && files.length > 0) setSelectedFile(files[0]);
-    }
-
-    function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-        event.preventDefault();
-        const files = event.dataTransfer.files;
-        if (files && files.length > 0) setSelectedFile(files[0]);
-    }
-
-    function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
-        event.preventDefault();
+    async function handleLookup(word: string) {
+        if (expandedWord === word) {
+            setExpandedWord(null);
+            return;
+        }
+        setExpandedWord(word);
+        if (!lookupData[word]) {
+            setLookupLoading(true);
+            try {
+                const response = await fetch(
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(
+                        `https://api.excelapi.org/dictionary/enja?word=${word}`
+                    )}`,
+                    {
+                        headers: {
+                            "Accept": "text/plain",
+                            "User-Agent": "Mozilla/5.0"
+                        }
+                    }
+                );
+                const text = await response.text();
+                const definitions = text.split("/").map(def => def.trim()).filter(Boolean);
+                setLookupData(prev => ({ ...prev, [word]: definitions }));
+            } catch (err) {
+                console.error("Lookup failed:", err);
+                setLookupData(prev => ({ ...prev, [word]: [] }));
+            } finally {
+                setLookupLoading(false);
+            }
+        }
     }
 
     async function extractText() {
@@ -53,7 +71,7 @@ export default function MyComponent() {
             words = words.filter(
                 word =>
                     !stopwords.includes(word) &&
-                    dictionary.has(word) &&           // <-- Set lookup for speed
+                    dictionary.has(word) &&
                     !/^\d+$/.test(word) &&
                     word.length > 3
             );
@@ -79,15 +97,15 @@ export default function MyComponent() {
 
             <div
                 className="drop-zone"
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
+                onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) setSelectedFile(e.dataTransfer.files[0]); }}
+                onDragOver={e => e.preventDefault()}
                 onClick={() => document.getElementById("fileInput")?.click()}
             >
                 <input
                     id="fileInput"
                     type="file"
                     accept="application/pdf"
-                    onChange={handleFileSelect}
+                    onChange={e => { if (e.target.files?.length) setSelectedFile(e.target.files[0]); }}
                     style={{ display: "none" }}
                 />
                 <button className="upload-btn">
@@ -122,37 +140,56 @@ export default function MyComponent() {
                         </thead>
                         <tbody>
                             {Object.entries(wordCounts).map(([word, count], index) => (
-                                <tr
-                                    key={word}
-                                    style={{
-                                        backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff"
-                                    }}
-                                >
-                                    <td style={{ padding: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <button
-                                            style={{
-                                                padding: "2px 6px",
-                                                fontSize: "0.8rem",
-                                                cursor: "pointer",
-                                                background: "#007bff",
-                                                color: "white",
-                                                border: "none",
-                                                borderRadius: "3px"
-                                            }}
-                                            onClick={() => console.log(`Lookup: ${word}`)}
-                                        >
-                                            Lookup
-                                        </button>
-                                        <span>{word}</span>
-                                    </td>
-                                    <td style={{ padding: "8px", textAlign: "right" }}>{count}</td>
-                                </tr>
+                                <>
+                                    <tr
+                                        key={`${word}-row`}
+                                        style={{
+                                            backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff"
+                                        }}
+                                    >
+                                        <td style={{ padding: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <button
+                                                style={{
+                                                    padding: "2px 6px",
+                                                    fontSize: "0.8rem",
+                                                    cursor: "pointer",
+                                                    background: "#007bff",
+                                                    color: "white",
+                                                    border: "none",
+                                                    borderRadius: "3px"
+                                                }}
+                                                onClick={() => handleLookup(word)}
+                                            >
+                                                {expandedWord === word ? "Close" : "Lookup"}
+                                            </button>
+                                            <span>{word}</span>
+                                        </td>
+                                        <td style={{ padding: "8px", textAlign: "right" }}>{count}</td>
+                                    </tr>
+                                    {expandedWord === word && (
+                                        <tr key={`${word}-expanded`}>
+                                            <td colSpan={2} style={{ padding: "8px", background: "#eef" }}>
+                                                {lookupLoading && "Loading..."}
+                                                {!lookupLoading && lookupData[word] && lookupData[word].length > 0 && (
+                                                    <div>
+                                                        <strong>{word}</strong>
+                                                        <ul>
+                                                            {lookupData[word].map((def: string, i: number) => (
+                                                                <li key={i}>{def}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {!lookupLoading && lookupData[word] && lookupData[word].length === 0 && "No results found."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </>
                             ))}
                         </tbody>
                     </table>
                 )}
             </div>
-
         </div>
     );
 }
