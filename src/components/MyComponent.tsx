@@ -1,16 +1,30 @@
 import { useState, useEffect } from "react";
 import stopwordsJson from "../lib/stopwords.json";
 const stopwords: string[] = stopwordsJson.stopwords;
+import { useDictionaryStore } from "../stores/useDictionaryStore";
+
 
 export default function MyComponent() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
-    const [loading, setLoading] = useState(false);
-    const [dictionary, setDictionary] = useState<Set<string>>(new Set());
-    const [expandedWord, setExpandedWord] = useState<string | null>(null);
-    const [lookupData, setLookupData] = useState<Record<string, string[]>>({});
-    const [lookupLoading, setLookupLoading] = useState(false);
+    const dictionary = useDictionaryStore((state) => state.dictionary);
+    const setDictionary = useDictionaryStore((state) => state.setDictionary);
     const uniqueWords = Object.keys(wordCounts).length;
+    const loading = useDictionaryStore((state) => state.loading);
+    // const setLoading = useDictionaryStore((state) => state.setLoading);
+
+    const lookupLoading = useDictionaryStore((state) => state.lookupLoading);
+    // const setLookupLoading = useDictionaryStore((state) => state.setLookupLoading);
+
+    const expandedWord = useDictionaryStore((state) => state.expandedWord);
+    // const setExpandedWord = useDictionaryStore((state) => state.setExpandedWord);
+
+    const lookupData = useDictionaryStore((state) => state.lookupData);
+    // const setLookupData = useDictionaryStore((state) => state.setLookupData);
+
+    const handleLookup = useDictionaryStore((state) => state.handleLookup);
+    const extractText = useDictionaryStore((state) => state.extractText);
+
 
     useEffect(() => {
         async function loadDictionary() {
@@ -18,82 +32,89 @@ export default function MyComponent() {
                 const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
                 if (!response.ok) throw new Error("Failed to load dictionary");
                 const data = await response.json();
-                setDictionary(new Set(data.dictionary));
+                setDictionary(data.dictionary);
             } catch (err) {
                 console.error("Failed to load dictionary:", err);
             }
         }
         loadDictionary();
-    }, []);
+    }, [setDictionary]);
 
-    async function handleLookup(word: string) {
-        if (expandedWord === word) {
-            setExpandedWord(null);
-            return;
-        }
-        setExpandedWord(word);
-        if (!lookupData[word]) {
-            setLookupLoading(true);
-            try {
-                const response = await fetch(
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(
-                        `https://api.excelapi.org/dictionary/enja?word=${word}`
-                    )}`,
-                    {
-                        headers: {
-                            "Accept": "text/plain",
-                            "User-Agent": "Mozilla/5.0"
-                        }
-                    }
-                );
-                const text = await response.text();
-                const definitions = text.split("/").map(def => def.trim()).filter(Boolean);
-                setLookupData(prev => ({ ...prev, [word]: definitions }));
-            } catch (err) {
-                console.error("Lookup failed:", err);
-                setLookupData(prev => ({ ...prev, [word]: [] }));
-            } finally {
-                setLookupLoading(false);
-            }
-        }
-    }
+    const processFile = async () => {
+        if (!selectedFile) return;
+        const results = await extractText(selectedFile, stopwords);
+        setWordCounts(results);
+    };
 
-    async function extractText() {
-        if (!selectedFile || dictionary.size === 0) return;
-        setLoading(true);
+    // async function handleLookup(word: string) {
+    //     if (expandedWord === word) {
+    //         setExpandedWord(null);
+    //         return;
+    //     }
+    //     setExpandedWord(word);
+    //     if (!lookupData[word]) {
+    //         setLookupLoading(true);
+    //         try {
+    //             const response = await fetch(
+    //                 `https://api.allorigins.win/raw?url=${encodeURIComponent(
+    //                     `https://api.excelapi.org/dictionary/enja?word=${word}`
+    //                 )}`,
+    //                 {
+    //                     headers: {
+    //                         "Accept": "text/plain",
+    //                         "User-Agent": "Mozilla/5.0"
+    //                     }
+    //                 }
+    //             );
+    //             const text = await response.text();
+    //             const definitions = text.split("/").map(def => def.trim()).filter(Boolean);
+    //             setLookupData(word, definitions);
+    //         } catch (err) {
+    //             console.error("Lookup failed:", err);
+    //             setLookupData(word, []);
 
-        try {
-            const pdfToText = (await import("react-pdftotext")).default;
-            let text = await pdfToText(selectedFile);
-            text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
-            let words = text.split(/\s+/).filter(Boolean);
+    //         } finally {
+    //             setLookupLoading(false);
+    //         }
+    //     }
+    // }
 
-            words = words.filter(
-                word =>
-                    !stopwords.includes(word) &&
-                    dictionary.has(word) &&
-                    !/^\d+$/.test(word) &&
-                    word.length > 3
-            );
+    // async function extractText() {
+    //     if (!selectedFile || dictionary.size === 0) return;
+    //     setLoading(true);
 
-            const wordCount = new Map<string, number>();
-            words.forEach(word => {
-                wordCount.set(word, (wordCount.get(word) || 0) + 1);
-            });
+    //     try {
+    //         const pdfToText = (await import("react-pdftotext")).default;
+    //         let text = await pdfToText(selectedFile);
+    //         text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
+    //         let words = text.split(/\s+/).filter(Boolean);
 
-            setWordCounts(Object.fromEntries(wordCount));
-        } catch (error) {
-            console.error("Text extraction failed", error);
-            setWordCounts({});
-        } finally {
-            setLoading(false);
-        }
-    }
+    //         words = words.filter(
+    //             word =>
+    //                 !stopwords.includes(word) &&
+    //                 dictionary.has(word) &&
+    //                 !/^\d+$/.test(word) &&
+    //                 word.length > 3
+    //         );
+
+    //         const wordCount = new Map<string, number>();
+    //         words.forEach(word => {
+    //             wordCount.set(word, (wordCount.get(word) || 0) + 1);
+    //         });
+
+    //         setWordCounts(Object.fromEntries(wordCount));
+    //     } catch (error) {
+    //         console.error("Text extraction failed", error);
+    //         setWordCounts({});
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // }
 
     return (
         <div className="upload-container">
-            <h2>Analyze PDF</h2>
-            <p>Upload a PDF file to extract and count words.</p>
+            <h2>Personal Dictionary</h2>
+            <p>Upload a PDF file and get all the words</p>
 
             <div
                 className="drop-zone"
@@ -116,7 +137,7 @@ export default function MyComponent() {
 
             <button
                 className="process-btn"
-                onClick={extractText}
+                onClick={processFile}
                 disabled={!selectedFile || loading || dictionary.size === 0}
             >
                 {loading
