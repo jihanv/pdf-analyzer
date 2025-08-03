@@ -156,7 +156,9 @@ export default function MyComponent() {
                                                     background: "#007bff",
                                                     color: "white",
                                                     border: "none",
-                                                    borderRadius: "3px"
+                                                    borderRadius: "3px",
+                                                    width: "70px",         // <-- Added fixed width
+                                                    textAlign: "center"    // Center the text
                                                 }}
                                                 onClick={() => handleLookup(word)}
                                             >
