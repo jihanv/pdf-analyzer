@@ -7,6 +7,8 @@ export default function MyComponent() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
+    const [dictLoaded, setDictLoaded] = useState(false);
+    const [dictionary, setDictionary] = useState<string[]>([]);
     const uniqueWords = Object.keys(wordCounts).length;
 
     function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
@@ -24,21 +26,28 @@ export default function MyComponent() {
         event.preventDefault();
     }
 
+    async function loadDictionary() {
+        if (dictLoaded) return; // don’t reload if already loaded
+        const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
+        if (!response.ok) throw new Error("Failed to load dictionary");
+        const data = await response.json();
+        setDictionary(data.dictionary);
+        setDictLoaded(true);
+    }
+
     async function extractText() {
         if (!selectedFile) return;
         setLoading(true);
 
         try {
-            // Lazy-load both the PDF parser & dictionary
+            // Lazy-load library and dictionary
             const pdfToText = (await import("react-pdftotext")).default;
-            const dictionaryJson = (await import("../lib/dictionary.json")).default;
-            const dictionary: string[] = dictionaryJson.dictionary;
+            if (!dictLoaded) await loadDictionary();
 
             let text = await pdfToText(selectedFile);
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
 
-            // Filter out stopwords, numbers, and words not in dictionary
             words = words.filter(
                 word =>
                     !stopwords.includes(word) &&
@@ -47,7 +56,6 @@ export default function MyComponent() {
                     word.length > 3
             );
 
-            // Count words in order of appearance
             const wordCount = new Map<string, number>();
             words.forEach(word => {
                 wordCount.set(word, (wordCount.get(word) || 0) + 1);
