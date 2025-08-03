@@ -42,12 +42,15 @@ export default function MyComponent() {
                 word => !stopwords.includes(word) && !/^\d+$/.test(word) && word.length > 3
             );
 
-            const wordCount: Record<string, number> = {};
+            const wordCount = new Map<string, number>();
             words.forEach(word => {
-                wordCount[word] = (wordCount[word] || 0) + 1;
+                if (!wordCount.has(word)) {
+                    wordCount.set(word, 1);
+                } else {
+                    wordCount.set(word, wordCount.get(word)! + 1);
+                }
             });
-
-            setWordCounts(wordCount);
+            setWordCounts(Object.fromEntries(wordCount));
         } catch (error) {
             console.error("Text extraction failed", error);
             setWordCounts({});
@@ -98,7 +101,6 @@ export default function MyComponent() {
                     "No data yet."
                 ) : (
                     Object.entries(wordCounts)
-                        .sort((a, b) => b[1] - a[1])
                         .map(([word, count]) => (
                             <p key={word}>
                                 {word}, {count}
