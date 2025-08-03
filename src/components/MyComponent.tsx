@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { stopwords } from "../lib/stopwords.json";
+import { dictionary } from "../lib/dictionary.json";
+
+
+
 
 export default function MyComponent() {
 
@@ -39,7 +43,10 @@ export default function MyComponent() {
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
             words = words.filter(
-                word => !stopwords.includes(word) && !/^\d+$/.test(word) && word.length > 3
+                word => !stopwords.includes(word)
+                    && dictionary.includes(word)
+                    && !/^\d+$/.test(word)
+                    && word.length > 3
             );
 
             const wordCount = new Map<string, number>();
