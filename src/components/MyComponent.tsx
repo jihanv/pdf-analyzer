@@ -3,29 +3,23 @@ import stopwordsJson from "../lib/stopwords.json";
 const stopwords: string[] = stopwordsJson.stopwords;
 import { useDictionaryStore } from "../stores/useDictionaryStore";
 
-
 export default function MyComponent() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
     const dictionary = useDictionaryStore((state) => state.dictionary);
     const setDictionary = useDictionaryStore((state) => state.setDictionary);
     const uniqueWords = Object.keys(wordCounts).length;
+
     const loading = useDictionaryStore((state) => state.loading);
-    // const setLoading = useDictionaryStore((state) => state.setLoading);
-
     const lookupLoading = useDictionaryStore((state) => state.lookupLoading);
-    // const setLookupLoading = useDictionaryStore((state) => state.setLookupLoading);
-
-    const expandedWord = useDictionaryStore((state) => state.expandedWord);
-    // const setExpandedWord = useDictionaryStore((state) => state.setExpandedWord);
+    const expandedWords = useDictionaryStore((state) => state.expandedWords);
 
     const lookupData = useDictionaryStore((state) => state.lookupData);
-    // const setLookupData = useDictionaryStore((state) => state.setLookupData);
-
-    const handleLookup = useDictionaryStore((state) => state.handleLookup);
+    const openLookup = useDictionaryStore((state) => state.openLookup);
+    const closeLookup = useDictionaryStore((state) => state.closeLookup);
     const extractText = useDictionaryStore((state) => state.extractText);
 
-
+    // Load dictionary on mount
     useEffect(() => {
         async function loadDictionary() {
             try {
@@ -40,76 +34,12 @@ export default function MyComponent() {
         loadDictionary();
     }, [setDictionary]);
 
+    // Process PDF and extract words
     const processFile = async () => {
         if (!selectedFile) return;
         const results = await extractText(selectedFile, stopwords);
         setWordCounts(results);
     };
-
-    // async function handleLookup(word: string) {
-    //     if (expandedWord === word) {
-    //         setExpandedWord(null);
-    //         return;
-    //     }
-    //     setExpandedWord(word);
-    //     if (!lookupData[word]) {
-    //         setLookupLoading(true);
-    //         try {
-    //             const response = await fetch(
-    //                 `https://api.allorigins.win/raw?url=${encodeURIComponent(
-    //                     `https://api.excelapi.org/dictionary/enja?word=${word}`
-    //                 )}`,
-    //                 {
-    //                     headers: {
-    //                         "Accept": "text/plain",
-    //                         "User-Agent": "Mozilla/5.0"
-    //                     }
-    //                 }
-    //             );
-    //             const text = await response.text();
-    //             const definitions = text.split("/").map(def => def.trim()).filter(Boolean);
-    //             setLookupData(word, definitions);
-    //         } catch (err) {
-    //             console.error("Lookup failed:", err);
-    //             setLookupData(word, []);
-
-    //         } finally {
-    //             setLookupLoading(false);
-    //         }
-    //     }
-    // }
-
-    // async function extractText() {
-    //     if (!selectedFile || dictionary.size === 0) return;
-    //     setLoading(true);
-
-    //     try {
-    //         const pdfToText = (await import("react-pdftotext")).default;
-    //         let text = await pdfToText(selectedFile);
-    //         text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
-    //         let words = text.split(/\s+/).filter(Boolean);
-
-    //         words = words.filter(
-    //             word =>
-    //                 !stopwords.includes(word) &&
-    //                 dictionary.has(word) &&
-    //                 !/^\d+$/.test(word) &&
-    //                 word.length > 3
-    //         );
-
-    //         const wordCount = new Map<string, number>();
-    //         words.forEach(word => {
-    //             wordCount.set(word, (wordCount.get(word) || 0) + 1);
-    //         });
-
-    //         setWordCounts(Object.fromEntries(wordCount));
-    //     } catch (error) {
-    //         console.error("Text extraction failed", error);
-    //         setWordCounts({});
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }
 
     return (
         <div className="upload-container">
@@ -118,15 +48,20 @@ export default function MyComponent() {
 
             <div
                 className="drop-zone"
-                onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) setSelectedFile(e.dataTransfer.files[0]); }}
-                onDragOver={e => e.preventDefault()}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.length) setSelectedFile(e.dataTransfer.files[0]);
+                }}
+                onDragOver={(e) => e.preventDefault()}
                 onClick={() => document.getElementById("fileInput")?.click()}
             >
                 <input
                     id="fileInput"
                     type="file"
                     accept="application/pdf"
-                    onChange={e => { if (e.target.files?.length) setSelectedFile(e.target.files[0]); }}
+                    onChange={(e) => {
+                        if (e.target.files?.length) setSelectedFile(e.target.files[0]);
+                    }}
                     style={{ display: "none" }}
                 />
                 <button className="upload-btn">
@@ -178,22 +113,30 @@ export default function MyComponent() {
                                                     color: "white",
                                                     border: "none",
                                                     borderRadius: "3px",
-                                                    width: "70px",         // <-- Added fixed width
-                                                    textAlign: "center"    // Center the text
+                                                    width: "70px",
+                                                    textAlign: "center"
                                                 }}
-                                                onClick={() => handleLookup(word)}
+                                                onClick={() =>
+                                                    expandedWords.has(word)
+                                                        ? closeLookup(word)
+                                                        : openLookup(word)
+                                                }
                                             >
-                                                {expandedWord === word ? "Close" : "Lookup"}
+                                                {expandedWords.has(word) ? "Close" : "Lookup"}
                                             </button>
                                             <span>{word}</span>
+                                            {lookupLoading.has(word) && (
+                                                <span style={{ marginLeft: "8px", fontSize: "0.8rem", color: "#666" }}>
+                                                    Loading...
+                                                </span>
+                                            )}
                                         </td>
                                         <td style={{ padding: "8px", textAlign: "right" }}>{count}</td>
                                     </tr>
-                                    {expandedWord === word && (
+                                    {expandedWords.has(word) && (
                                         <tr key={`${word}-expanded`}>
                                             <td colSpan={2} style={{ padding: "8px", background: "#eef" }}>
-                                                {lookupLoading && "Loading..."}
-                                                {!lookupLoading && lookupData[word] && lookupData[word].length > 0 && (
+                                                {lookupData[word] && lookupData[word].length > 0 && (
                                                     <div>
                                                         <strong>{word}</strong>
                                                         <ul>
@@ -203,7 +146,7 @@ export default function MyComponent() {
                                                         </ul>
                                                     </div>
                                                 )}
-                                                {!lookupLoading && lookupData[word] && lookupData[word].length === 0 && "No results found."}
+                                                {lookupData[word] && lookupData[word].length === 0 && "No results found."}
                                             </td>
                                         </tr>
                                     )}
