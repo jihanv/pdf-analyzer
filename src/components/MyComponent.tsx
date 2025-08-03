@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import stopwordsJson from "../lib/stopwords.json";
 const stopwords: string[] = stopwordsJson.stopwords;
 
@@ -7,9 +7,23 @@ export default function MyComponent() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [wordCounts, setWordCounts] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(false);
-    const [dictLoaded, setDictLoaded] = useState(false);
     const [dictionary, setDictionary] = useState<string[]>([]);
     const uniqueWords = Object.keys(wordCounts).length;
+
+    // Preload dictionary when component mounts
+    useEffect(() => {
+        async function loadDictionary() {
+            try {
+                const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
+                if (!response.ok) throw new Error("Failed to load dictionary");
+                const data = await response.json();
+                setDictionary(data.dictionary);
+            } catch (err) {
+                console.error("Failed to load dictionary:", err);
+            }
+        }
+        loadDictionary();
+    }, []);
 
     function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
         const files = event.target.files;
@@ -26,24 +40,12 @@ export default function MyComponent() {
         event.preventDefault();
     }
 
-    async function loadDictionary() {
-        if (dictLoaded) return; // don’t reload if already loaded
-        const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
-        if (!response.ok) throw new Error("Failed to load dictionary");
-        const data = await response.json();
-        setDictionary(data.dictionary);
-        setDictLoaded(true);
-    }
-
     async function extractText() {
-        if (!selectedFile) return;
+        if (!selectedFile || dictionary.length === 0) return;
         setLoading(true);
 
         try {
-            // Lazy-load library and dictionary
             const pdfToText = (await import("react-pdftotext")).default;
-            if (!dictLoaded) await loadDictionary();
-
             let text = await pdfToText(selectedFile);
             text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
             let words = text.split(/\s+/).filter(Boolean);
@@ -97,7 +99,7 @@ export default function MyComponent() {
             <button
                 className="process-btn"
                 onClick={extractText}
-                disabled={!selectedFile || loading}
+                disabled={!selectedFile || loading || dictionary.length === 0}
             >
                 {loading
                     ? "Processing..."
