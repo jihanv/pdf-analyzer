@@ -36,8 +36,10 @@ export default function MyComponent() {
         <div className="upload-container">
             <Header />
             <InputModeToggle />
-            {inputMode === "pdf" && <FileUpload />}
-            {inputMode === "text" && <TextInput />}
+            <div className="input-container">
+                {inputMode === "pdf" && <FileUpload />}
+                {inputMode === "text" && <TextInput />}
+            </div>
             <ProcessButton />
             <ResultsTable />
         </div>

@@ -1,59 +1,118 @@
+/* =======================
+   Upload container
+======================= */
 .upload-container {
-  max-width: 600px;
+  width: 100%;
   margin: 40px auto;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center children */
   font-family: Arial, sans-serif;
 }
 
 .upload-container h2 {
   font-size: 2rem;
-  margin-bottom: 10px;
+  margin: 0.2rem;
+  align-items: center;
 }
 
 .upload-container p {
   color: #555;
-  margin-bottom: 20px;
+  margin: 0.2rem;
+  margin-bottom: 1rem;
 }
 
+/* =======================
+   Shared input container (PDF/Text)
+======================= */
+.input-container {
+  width: 80vw;
+  max-width: 1200px;
+  min-height: 40vh;
+  max-height: 40vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  margin: 0 auto 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fdfdfd;
+  box-sizing: border-box;
+}
+
+/* =======================
+   Textarea for "Paste Text"
+======================= */
+.text-input {
+  flex: 1;
+  width: 100%;
+  height: 100%
+  border: 2px solid #aaa;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  resize: none;
+  background: #fff;
+}
+/* =======================
+   File upload dropzone
+======================= */
 .drop-zone {
-  border: 2px dashed #ccc;
-  border-radius: 10px;
-  padding: 40px 20px;
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s;
+  background: #fafafa;
+  transition: background 0.2s;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .drop-zone:hover {
-  background-color: #e0e0e0;
+  background: #f0f0f0;
 }
 
+/* =======================
+   Upload button
+======================= */
 .upload-btn {
-  background-color: #e3342f;
-  color: white;
+  padding: 8px 16px;
   border: none;
-  padding: 15px 30px;
+  border-radius: 4px;
+  background: #007bff;
+  color: white;
   font-size: 1rem;
-  border-radius: 5px;
   cursor: pointer;
   margin-bottom: 10px;
 }
 
 .upload-btn:hover {
-  background-color: #cc1f1a;
+  background: #0056b3;
 }
 
 .small-text {
-  font-size: 0.9rem;
-  color: #888;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #666;
 }
 
+/* =======================
+   Process button
+======================= */
 .process-btn {
-  margin-top: 20px;
+  margin: 0;
   background-color: #444;
   color: white;
   border: none;
-  padding: 12px 25px;
-  font-size: 1rem;
+  padding: .5rem .7rem;
+  font-size: .91rem;
   border-radius: 5px;
   cursor: pointer;
 }
@@ -63,7 +122,26 @@
   cursor: not-allowed;
 }
 
+/* =======================
+   Results
+======================= */
 .results {
   margin-top: 30px;
   text-align: left;
+  width: 70vw;
+  height: 30vh;
+}
+
+.results {
+  margin-top: 30px;
+  text-align: left;
+  width: 70vw;
+  max-width: 1200px;
+  height: 25vh;
+  overflow-y: auto;        /* Enable vertical scrolling */
+  border: 1px solid #ccc;  /* Optional: add a border */
+  border-radius: 6px;      /* Optional: match input container style */
+  padding: 10px;           /* Optional: inner spacing */
+  background: #fff;        /* Optional: clean background */
+  box-sizing: border-box;
 }
