@@ -39,7 +39,9 @@ export default function WordTableBody() {
                         {expandedWords.has(word) && (
                             <tr key={`${word}-expanded`}>
                                 <td colSpan={2} style={{ padding: "8px", background: "#eef" }}>
-                                    {definitions.length > 0 && (
+                                    {lookupLoading.has(word) ? (
+                                        <div style={{ padding: "8px", color: "#666" }}>Loading definitions...</div>
+                                    ) : definitions.length > 0 ? (
                                         <div>
                                             <strong style={{ fontSize: "1.1rem" }}>{word}</strong>
                                             {lookupVariants[word] && lookupVariants[word] !== word.toLowerCase() && (
@@ -82,14 +84,35 @@ export default function WordTableBody() {
                                                 </label>
                                             </div>
 
-                                            <ul style={{ marginTop: "8px" }}>
-                                                {definitions.map((def: string, i: number) => (
-                                                    <li key={i}>{def}</li>
-                                                ))}
-                                            </ul>
+                                            {/* Definitions list */}
+                                            <div style={{ marginTop: "8px" }}>
+                                                {definitions.map((def: string, i: number) => {
+                                                    // Bold header for part of speech
+                                                    if (def.startsWith("**") && def.endsWith("**")) {
+                                                        return (
+                                                            <div key={i} style={{ fontWeight: "bold", marginTop: "6px" }}>
+                                                                {def.replace(/\*\*/g, "")}
+                                                            </div>
+                                                        );
+                                                    }
+                                                    // Style examples (lines with "e.g.,")
+                                                    const [main, example] = def.split("\n");
+                                                    return (
+                                                        <div key={i} style={{ marginLeft: "12px", marginBottom: "4px" }}>
+                                                            {main}
+                                                            {example && (
+                                                                <div style={{ fontStyle: "italic", color: "#555", marginTop: "2px" }}>
+                                                                    {example.trim()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
+                                    ) : (
+                                        "No results found."
                                     )}
-                                    {definitions.length === 0 && "No results found."}
                                 </td>
                             </tr>
                         )}

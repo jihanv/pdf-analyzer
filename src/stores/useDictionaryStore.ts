@@ -162,7 +162,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       if (lang === "ja") {
         // Japanese: existing API
         const response = await fetch(
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(
+          `https://corsproxy.io/?${encodeURIComponent(
             `https://api.excelapi.org/dictionary/enja?word=${query}`
           )}`,
           { headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" } }
@@ -187,15 +187,25 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
         if (!Array.isArray(data)) return ["No results found."];
 
         // Extract formatted strings: Part of speech + definition + example
-        const definitions: string[] = [];
+        // Group by part of speech
+        const grouped: Record<string, string[]> = {};
         for (const entry of data) {
           for (const meaning of entry.meanings || []) {
+            const pos = meaning.partOfSpeech || "unknown";
             for (const def of meaning.definitions || []) {
-              let formatted = `${meaning.partOfSpeech}: ${def.definition}`;
-              if (def.example) formatted += ` (e.g., "${def.example}")`;
-              definitions.push(formatted);
+              let formatted = def.definition;
+              if (def.example) formatted += `\n   e.g., "${def.example}"`;
+              if (!grouped[pos]) grouped[pos] = [];
+              grouped[pos].push(formatted);
             }
           }
+        }
+
+        // Convert to array with headers
+        const definitions: string[] = [];
+        for (const [pos, defs] of Object.entries(grouped)) {
+          definitions.push(`**${pos}**`);
+          defs.forEach((d) => definitions.push(d));
         }
         return definitions.length > 0 ? definitions : ["No results found."];
       }
