@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+type InputMode = "pdf" | "text";
+
 type DictionaryStore = {
   // File management
   selectedFile: File | null;
@@ -41,6 +43,9 @@ type DictionaryStore = {
 
   // Extract text from PDF or pasted text
   extractText: (input: File | string, stopwords: string[]) => Promise<void>;
+
+  inputMode: InputMode;
+  setInputMode: (mode: InputMode) => void;
 };
 
 export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
@@ -263,4 +268,6 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       setLoading(false);
     }
   },
+  inputMode: "pdf",
+  setInputMode: (mode) => set({ inputMode: mode }),
 }));

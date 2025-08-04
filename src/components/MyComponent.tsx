@@ -6,11 +6,13 @@ import FileUpload from "./FileUpload";
 import ProcessButton from "./ProcessButton";
 import ResultsTable from "./ResultsTable";
 import TextInput from "./TextInput";
+import InputModeToggle from "./InputModeToggle";
 
 export default function MyComponent() {
 
 
     const setDictionary = useDictionaryStore((state) => state.setDictionary);
+    const inputMode = useDictionaryStore((state) => state.inputMode);
 
 
 
@@ -33,8 +35,9 @@ export default function MyComponent() {
     return (
         <div className="upload-container">
             <Header />
-            <FileUpload />
-            <TextInput />
+            <InputModeToggle />
+            {inputMode === "pdf" && <FileUpload />}
+            {inputMode === "text" && <TextInput />}
             <ProcessButton />
             <ResultsTable />
         </div>
