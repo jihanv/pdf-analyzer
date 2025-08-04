@@ -5,11 +5,15 @@ type DictionaryStore = {
   selectedFile: File | null;
   setSelectedFile: (file: File | null) => void;
 
+  // Pasted text management
+  pastedText: string;
+  setPastedText: (text: string) => void;
+
   // Dictionary words
   dictionary: Set<string>;
   setDictionary: (words: string[]) => void;
 
-  // Global loading for PDF processing
+  // Global loading for PDF/text processing
   loading: boolean;
   setLoading: (value: boolean) => void;
 
@@ -31,8 +35,12 @@ type DictionaryStore = {
   lookupData: Record<string, string[]>;
   setLookupData: (word: string, data: string[]) => void;
 
-  // Extract text from PDF
-  extractText: (file: File, stopwords: string[]) => Promise<void>;
+  // Matched variant tracking
+  lookupVariants: Record<string, string | null>;
+  setLookupVariant: (word: string, variant: string | null) => void;
+
+  // Extract text from PDF or pasted text
+  extractText: (input: File | string, stopwords: string[]) => Promise<void>;
 };
 
 export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
@@ -40,11 +48,15 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
   selectedFile: null,
   setSelectedFile: (file) => set({ selectedFile: file }),
 
+  // Pasted text
+  pastedText: "",
+  setPastedText: (text) => set({ pastedText: text }),
+
   // Dictionary words
   dictionary: new Set(),
   setDictionary: (words) => set({ dictionary: new Set(words) }),
 
-  // Global loading for PDF processing
+  // Global loading for PDF/text processing
   loading: false,
   setLoading: (value) => set({ loading: value }),
 
@@ -76,6 +88,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       setLookupData,
       addLookupLoading,
       removeLookupLoading,
+      setLookupVariant,
     } = get();
 
     if (expandedWords.has(word)) return;
@@ -165,13 +178,17 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
         }
       }
 
-      // 3. Log which variant worked
+      // 3. Log & store which variant worked
       if (usedVariant) {
         console.log(
           `Lookup for "${word}" succeeded with variant "${usedVariant}".`
         );
-      } else if (definitions.length === 0) {
-        console.log(`Lookup for "${word}" returned no results.`);
+        setLookupVariant(word, usedVariant);
+      } else {
+        setLookupVariant(word, null);
+        if (definitions.length === 0) {
+          console.log(`Lookup for "${word}" returned no results.`);
+        }
       }
 
       // 4. Fallback if still nothing
@@ -183,6 +200,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
     } catch (err) {
       console.error("Lookup failed:", err);
       setLookupData(word, ["No results found."]);
+      setLookupVariant(word, null);
     } finally {
       removeLookupLoading(word);
     }
@@ -201,13 +219,25 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       lookupData: { ...state.lookupData, [word]: data },
     })),
 
-  // Extract text from PDF
-  extractText: async (file: File, stopwords: string[]) => {
+  // Matched variants
+  lookupVariants: {},
+  setLookupVariant: (word, variant) =>
+    set((state) => ({
+      lookupVariants: { ...state.lookupVariants, [word]: variant },
+    })),
+
+  // Extract text from PDF or pasted text
+  extractText: async (input: File | string, stopwords: string[]) => {
     const { dictionary, setLoading, setWordCounts } = get();
     setLoading(true);
     try {
-      const pdfToText = (await import("react-pdftotext")).default;
-      let text = await pdfToText(file);
+      let text = "";
+      if (typeof input === "string") {
+        text = input; // pasted text
+      } else {
+        const pdfToText = (await import("react-pdftotext")).default;
+        text = await pdfToText(input);
+      }
       text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
       let words = text.split(/\s+/).filter(Boolean);
 

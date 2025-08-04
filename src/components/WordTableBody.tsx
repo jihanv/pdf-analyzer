@@ -7,6 +7,7 @@ export default function WordTableBody() {
     const expandedWords = useDictionaryStore((state) => state.expandedWords);
     const lookupLoading = useDictionaryStore((state) => state.lookupLoading);
     const lookupData = useDictionaryStore((state) => state.lookupData);
+    const lookupVariants = useDictionaryStore((state) => state.lookupVariants);
 
     return (
         <>
@@ -34,8 +35,23 @@ export default function WordTableBody() {
                             <td colSpan={2} style={{ padding: "8px", background: "#eef" }}>
                                 {lookupData[word] && lookupData[word].length > 0 && (
                                     <div>
-                                        <strong>{word}</strong>
-                                        <ul>
+                                        <strong style={{ fontSize: "1.1rem" }}>{word}</strong>
+                                        {lookupVariants[word] && lookupVariants[word] !== word.toLowerCase() && (
+                                            <div
+                                                style={{
+                                                    display: "inline-block",
+                                                    marginLeft: "8px",
+                                                    background: "#444",
+                                                    color: "#fff",
+                                                    padding: "2px 8px",
+                                                    borderRadius: "12px",
+                                                    fontSize: "0.8rem"
+                                                }}
+                                            >
+                                                一致形: {lookupVariants[word]}
+                                            </div>
+                                        )}
+                                        <ul style={{ marginTop: "8px" }}>
                                             {lookupData[word].map((def: string, i: number) => (
                                                 <li key={i}>{def}</li>
                                             ))}

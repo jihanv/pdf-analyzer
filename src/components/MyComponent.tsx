@@ -5,6 +5,7 @@ import Header from "./Header";
 import FileUpload from "./FileUpload";
 import ProcessButton from "./ProcessButton";
 import ResultsTable from "./ResultsTable";
+import TextInput from "./TextInput";
 
 export default function MyComponent() {
 
@@ -33,6 +34,7 @@ export default function MyComponent() {
         <div className="upload-container">
             <Header />
             <FileUpload />
+            <TextInput />
             <ProcessButton />
             <ResultsTable />
         </div>
