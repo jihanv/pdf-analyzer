@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type InputMode = "pdf" | "text";
+type DefinitionLanguage = "ja" | "en";
 
 type DictionaryStore = {
   // File management
@@ -33,19 +33,27 @@ type DictionaryStore = {
   openLookup: (word: string) => Promise<void>;
   closeLookup: (word: string) => void;
 
-  // Lookup results
-  lookupData: Record<string, string[]>;
-  setLookupData: (word: string, data: string[]) => void;
+  // Lookup results (now stores by language)
+  lookupData: Record<string, { ja?: string[]; en?: string[] }>;
+  setLookupData: (
+    word: string,
+    lang: DefinitionLanguage,
+    data: string[]
+  ) => void;
 
   // Matched variant tracking
   lookupVariants: Record<string, string | null>;
   setLookupVariant: (word: string, variant: string | null) => void;
 
+  // Per-word language preference
+  wordDefinitionLanguage: Record<string, DefinitionLanguage>;
+  setWordDefinitionLanguage: (word: string, lang: DefinitionLanguage) => void;
+
   // Extract text from PDF or pasted text
   extractText: (input: File | string, stopwords: string[]) => Promise<void>;
 
-  inputMode: InputMode;
-  setInputMode: (mode: InputMode) => void;
+  inputMode: "pdf" | "text";
+  setInputMode: (mode: "pdf" | "text") => void;
 };
 
 export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
@@ -61,7 +69,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
   dictionary: new Set(),
   setDictionary: (words) => set({ dictionary: new Set(words) }),
 
-  // Global loading for PDF/text processing
+  // Global loading
   loading: false,
   setLoading: (value) => set({ loading: value }),
 
@@ -94,15 +102,18 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       addLookupLoading,
       removeLookupLoading,
       setLookupVariant,
+      wordDefinitionLanguage,
     } = get();
+    const lang = wordDefinitionLanguage[word] || "ja";
 
-    if (expandedWords.has(word)) return;
+    if (expandedWords.has(word)) {
+      // Still allow re-fetch for different language
+      if (lookupData[word]?.[lang]) return;
+    }
 
     const newSet = new Set(expandedWords);
     newSet.add(word);
     set({ expandedWords: newSet });
-
-    if (lookupData[word]) return;
 
     addLookupLoading(word);
 
@@ -143,30 +154,56 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       return Array.from(variants);
     };
 
-    // --- Fetch + clean text ---
-    const fetchDefinitions = async (query: string): Promise<string[]> => {
-      const response = await fetch(
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(
-          `https://api.excelapi.org/dictionary/enja?word=${query}`
-        )}`,
-        { headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" } }
-      );
+    // --- Fetch definitions based on language ---
+    const fetchDefinitions = async (
+      query: string,
+      lang: DefinitionLanguage
+    ): Promise<string[]> => {
+      if (lang === "ja") {
+        // Japanese: existing API
+        const response = await fetch(
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(
+            `https://api.excelapi.org/dictionary/enja?word=${query}`
+          )}`,
+          { headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" } }
+        );
+        const text = await response.text();
+        const cleanText = text
+          .replace(/^\uFEFF/, "")
+          .replace(/[‘’]/g, "'")
+          .replace(/[“”]/g, '"')
+          .replace(/\u3000/g, " ")
+          .trim();
+        return cleanText.length > 0 ? [cleanText] : [];
+      } else {
+        // English: dictionaryapi.dev
+        const response = await fetch(
+          `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
+            query
+          )}`
+        );
+        if (!response.ok) return ["No results found."];
+        const data = await response.json();
+        if (!Array.isArray(data)) return ["No results found."];
 
-      const text = await response.text();
-      const cleanText = text
-        .replace(/^\uFEFF/, "")
-        .replace(/[‘’]/g, "'")
-        .replace(/[“”]/g, '"')
-        .replace(/[\u0000-\u001F\u007F]/g, "")
-        .replace(/\u3000/g, " ")
-        .trim();
-
-      return cleanText.length > 0 ? [cleanText] : [];
+        // Extract formatted strings: Part of speech + definition + example
+        const definitions: string[] = [];
+        for (const entry of data) {
+          for (const meaning of entry.meanings || []) {
+            for (const def of meaning.definitions || []) {
+              let formatted = `${meaning.partOfSpeech}: ${def.definition}`;
+              if (def.example) formatted += ` (e.g., "${def.example}")`;
+              definitions.push(formatted);
+            }
+          }
+        }
+        return definitions.length > 0 ? definitions : ["No results found."];
+      }
     };
 
     try {
       // 1. Try the original
-      let definitions = await fetchDefinitions(word);
+      let definitions = await fetchDefinitions(word, lang);
       let usedVariant: string | null = null;
 
       // 2. If empty, try variants
@@ -174,7 +211,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
         const variants = generateVariants(word);
         for (const variant of variants) {
           if (variant === word.toLowerCase()) continue;
-          const defs = await fetchDefinitions(variant);
+          const defs = await fetchDefinitions(variant, lang);
           if (defs.length > 0) {
             definitions = defs;
             usedVariant = variant;
@@ -201,10 +238,10 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
         definitions = ["No results found."];
       }
 
-      setLookupData(word, definitions);
+      setLookupData(word, lang, definitions);
     } catch (err) {
       console.error("Lookup failed:", err);
-      setLookupData(word, ["No results found."]);
+      setLookupData(word, lang, ["No results found."]);
       setLookupVariant(word, null);
     } finally {
       removeLookupLoading(word);
@@ -219,9 +256,12 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
 
   // Lookup results
   lookupData: {},
-  setLookupData: (word, data) =>
+  setLookupData: (word, lang, data) =>
     set((state) => ({
-      lookupData: { ...state.lookupData, [word]: data },
+      lookupData: {
+        ...state.lookupData,
+        [word]: { ...state.lookupData[word], [lang]: data },
+      },
     })),
 
   // Matched variants
@@ -230,6 +270,16 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
     set((state) => ({
       lookupVariants: { ...state.lookupVariants, [word]: variant },
     })),
+
+  // Per-word language selection
+  wordDefinitionLanguage: {},
+  setWordDefinitionLanguage: (word, lang) => {
+    const { openLookup } = get();
+    set((state) => ({
+      wordDefinitionLanguage: { ...state.wordDefinitionLanguage, [word]: lang },
+    }));
+    openLookup(word); // auto-fetch when language changes
+  },
 
   // Extract text from PDF or pasted text
   extractText: async (input: File | string, stopwords: string[]) => {
@@ -268,6 +318,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       setLoading(false);
     }
   },
+
   inputMode: "pdf",
   setInputMode: (mode) => set({ inputMode: mode }),
 }));
