@@ -330,5 +330,11 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
   },
 
   inputMode: "pdf",
-  setInputMode: (mode) => set({ inputMode: mode }),
+  setInputMode: (mode) => {
+    if (mode === "pdf") {
+      set({ inputMode: mode, pastedText: "" }); // clear text when switching to PDF
+    } else {
+      set({ inputMode: mode, selectedFile: null }); // clear file when switching to Text
+    }
+  },
 }));

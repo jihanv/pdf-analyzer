@@ -28,8 +28,8 @@
 .input-container {
   width: 80vw;
   max-width: 1200px;
-  min-height: 40vh;
-  max-height: 40vh;
+
+  height: 35vh;
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -137,7 +137,7 @@
   text-align: left;
   width: 70vw;
   max-width: 1200px;
-  height: 25vh;
+  height: 30vh;
   overflow-y: auto;        /* Enable vertical scrolling */
   border: 1px solid #ccc;  /* Optional: add a border */
   border-radius: 6px;      /* Optional: match input container style */
