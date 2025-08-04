@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import pdfToText from "react-pdftotext";
 
 type DictionaryStore = {
   // File management
@@ -23,7 +22,7 @@ type DictionaryStore = {
   addLookupLoading: (word: string) => void;
   removeLookupLoading: (word: string) => void;
 
-  // Expanded rows (multiple)
+  // Expanded rows
   expandedWords: Set<string>;
   openLookup: (word: string) => Promise<void>;
   closeLookup: (word: string) => void;
@@ -68,9 +67,8 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       return { lookupLoading: newSet };
     }),
 
-  // Expanded rows (multiple)
+  // Expanded rows
   expandedWords: new Set(),
-
   openLookup: async (word: string) => {
     const {
       expandedWords,
@@ -90,13 +88,13 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
 
     addLookupLoading(word);
 
-    // --- Helper: generate fallback variants ---
+    // --- Generate fallback variants ---
     const generateVariants = (w: string): string[] => {
       const variants = new Set<string>();
       const lower = w.toLowerCase();
       variants.add(lower);
 
-      // Plurals
+      // plural → singular
       if (lower.endsWith("ies")) variants.add(lower.slice(0, -3) + "y");
       if (lower.endsWith("ves")) {
         variants.add(lower.slice(0, -3) + "f");
@@ -105,20 +103,20 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       if (lower.endsWith("es")) variants.add(lower.slice(0, -2));
       if (lower.endsWith("s")) variants.add(lower.slice(0, -1));
 
-      // Past tense
+      // past tense
       if (lower.endsWith("ied")) variants.add(lower.slice(0, -3) + "y");
       if (lower.endsWith("ed")) {
         variants.add(lower.slice(0, -2));
         variants.add(lower.slice(0, -1));
       }
 
-      // Present participle
+      // present participle
       if (lower.endsWith("ing")) {
         variants.add(lower.slice(0, -3)); // remove "ing"
         variants.add(lower.slice(0, -3) + "e"); // replace with "e"
       }
 
-      // Comparative / superlative
+      // comparatives/superlatives
       if (lower.endsWith("ier")) variants.add(lower.slice(0, -3) + "y");
       if (lower.endsWith("iest")) variants.add(lower.slice(0, -4) + "y");
       if (lower.endsWith("er")) variants.add(lower.slice(0, -2));
@@ -127,38 +125,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       return Array.from(variants);
     };
 
-    // --- Helper: API fetch + parse ---
-
-    // const fetchDefinitions = async (query: string): Promise<string[]> => {
-    //   const response = await fetch(
-    //     `https://api.allorigins.win/raw?url=${encodeURIComponent(
-    //       `https://api.excelapi.org/dictionary/enja?word=${query}`
-    //     )}`,
-    //     { headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" } }
-    //   );
-
-    //   const text = await response.text();
-    //   const cleanText = text
-    //     .replace(/^\uFEFF/, "")
-    //     .replace(/[‘’]/g, "'")
-    //     .replace(/[“”]/g, '"')
-    //     .replace(/[\u0000-\u001F\u007F]/g, "")
-    //     .replace(/\u3000/g, " ") // replace Japanese full-width spaces with normal space
-    //     .trim();
-
-    //   let definitions = cleanText
-    //     .split(/\s*\/\s*/) // split on slashes for top-level senses
-    //     .map((def) => def.trim())
-    //     .filter((def) => def.replace(/\s/g, "").length > 0); // only drop truly blank strings
-
-    //   // If somehow still nothing, fallback to raw
-    //   if (definitions.length === 0 && cleanText.length > 0) {
-    //     definitions = [cleanText];
-    //   }
-
-    //   return definitions;
-    // };
-
+    // --- Fetch + clean text ---
     const fetchDefinitions = async (query: string): Promise<string[]> => {
       const response = await fetch(
         `https://api.allorigins.win/raw?url=${encodeURIComponent(
@@ -173,53 +140,53 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
         .replace(/[‘’]/g, "'")
         .replace(/[“”]/g, '"')
         .replace(/[\u0000-\u001F\u007F]/g, "")
-        .replace(/\u3000/g, " ") // normalize full-width spaces
+        .replace(/\u3000/g, " ")
         .trim();
 
-      // Split first by "/"
-      const rawDefs = cleanText.split(/\s*\/\s*/).map((d) => d.trim());
-
-      // Then split each chunk by commas or semicolons (sub-senses)
-      let definitions: string[] = rawDefs.flatMap((def) =>
-        def
-          .split(/[;,]/)
-          .map((sub) => sub.trim())
-          .filter((s) => s.length > 0)
-      );
-
-      if (definitions.length === 0 && cleanText.length > 0) {
-        definitions = [cleanText];
-      }
-
-      return definitions;
+      return cleanText.length > 0 ? [cleanText] : [];
     };
 
     try {
-      // 1. Try the original word first
+      // 1. Try the original
       let definitions = await fetchDefinitions(word);
+      let usedVariant: string | null = null;
 
-      // 2. If that fails, try variants
+      // 2. If empty, try variants
       if (definitions.length === 0) {
         const variants = generateVariants(word);
         for (const variant of variants) {
-          if (variant === word.toLowerCase()) continue; // skip original
+          if (variant === word.toLowerCase()) continue;
           const defs = await fetchDefinitions(variant);
           if (defs.length > 0) {
             definitions = defs;
-            break; // stop at first successful match
+            usedVariant = variant;
+            break;
           }
         }
+      }
+
+      // 3. Log which variant worked
+      if (usedVariant) {
+        console.log(
+          `Lookup for "${word}" succeeded with variant "${usedVariant}".`
+        );
+      } else if (definitions.length === 0) {
+        console.log(`Lookup for "${word}" returned no results.`);
+      }
+
+      // 4. Fallback if still nothing
+      if (definitions.length === 0) {
+        definitions = ["No results found."];
       }
 
       setLookupData(word, definitions);
     } catch (err) {
       console.error("Lookup failed:", err);
-      setLookupData(word, []);
+      setLookupData(word, ["No results found."]);
     } finally {
       removeLookupLoading(word);
     }
   },
-
   closeLookup: (word: string) => {
     const { expandedWords } = get();
     const newSet = new Set(expandedWords);
@@ -239,6 +206,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
     const { dictionary, setLoading, setWordCounts } = get();
     setLoading(true);
     try {
+      const pdfToText = (await import("react-pdftotext")).default;
       let text = await pdfToText(file);
       text = text.toLocaleLowerCase().replace(/[^a-z0-9\s]/g, " ");
       let words = text.split(/\s+/).filter(Boolean);
@@ -257,7 +225,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       });
 
       const results = Object.fromEntries(wordCount);
-      setWordCounts(results); // <-- Save globally
+      setWordCounts(results);
     } catch (err) {
       console.error("Text extraction failed", err);
       setWordCounts({});
