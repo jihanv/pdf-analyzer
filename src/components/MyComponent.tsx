@@ -39,6 +39,7 @@ export default function MyComponent() {
             <div className="input-container">
                 {inputMode === "pdf" && <FileUpload />}
                 {inputMode === "text" && <TextInput />}
+                <div className="apple"></div>
             </div>
             <ProcessButton />
             <ResultsTable />
