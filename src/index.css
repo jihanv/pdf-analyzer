@@ -1,39 +1,17 @@
-/* =======================
-   Upload container
-======================= */
-.upload-container {
-  position: relative;
-  width: 100%;
-  margin: 40px auto;
+.view {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* center children */
-  font-family: Arial, sans-serif;
-}
-
-.upload-container h2 {
-  font-size: 2rem;
-  margin: 0.2rem;
-  align-items: center;
-}
-
-.upload-container p {
-  color: #555;
-  margin: 0.2rem;
-  margin-bottom: 1rem;
+  flex-direction: row;
+  gap: 1rem;
 }
 
 /* =======================
    Shared input container (PDF/Text)
 ======================= */
 .input-container {
-  width: 80vw;
-  max-width: 1200px;
-
-  height: 35vh;
+  width: 50vw;
+  height: 70vh;
   display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  flex-direction: column;
   margin: 0 auto 1rem;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -52,7 +30,7 @@
   border: 2px solid #aaa;
   border-radius: 8px;
   padding: 16px;
-  font-size: 1rem;
+  font-size: 1.3rem;
   box-sizing: border-box;
   resize: none;
   background: #fff;
@@ -98,6 +76,31 @@
   background: #0056b3;
 }
 
+/* =======================
+   Upload container
+======================= */
+.upload-container {
+  position: relative;
+  width: 100%;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center children */
+  font-family: Arial, sans-serif;
+}
+
+.upload-container h2 {
+  font-size: 2rem;
+  margin: 0.2rem;
+  align-items: center;
+}
+
+.upload-container p {
+  color: #555;
+  margin: 0.2rem;
+  margin-bottom: 1rem;
+}
+
 .small-text {
   margin-top: 8px;
   font-size: 0.85rem;
@@ -126,19 +129,20 @@
 /* =======================
    Results
 ======================= */
-.results {
+/* .results {
   margin-top: 30px;
   text-align: left;
-  width: 70vw;
+  width: 30vw;
   height: 30vh;
-}
+} */
 
 .results {
-  margin-top: 30px;
   text-align: left;
-  width: 70vw;
+  /* width: 30vw;
   max-width: 1200px;
-  height: 30vh;
+  height: 30vh; */
+  width: 40vw;
+  height: 70vh;
   overflow-y: auto; /* Enable vertical scrolling */
   border: 1px solid #ccc; /* Optional: add a border */
   border-radius: 6px; /* Optional: match input container style */
@@ -148,10 +152,10 @@
 }
 .apple {
   position: absolute;
-  top: 30%;
+  top: 5%;
   left: 0;
-  transform: translate(-30%, -30%) rotate(-37deg); /* pop out left & center vertically */
-  width: 40%; /* or a percentage like 30% */
+  transform: translate(-0%, -0%); /* pop out left & center vertically */
+  width: 15%; /* or a percentage like 30% */
   aspect-ratio: 16 / 9;
   background-image: url("/jihan-apple.svg");
   background-repeat: no-repeat;
