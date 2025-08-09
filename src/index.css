@@ -26,7 +26,6 @@
 .text-input {
   flex: 1;
   width: 100%;
-  height: 100%;
   border: 2px solid #aaa;
   border-radius: 8px;
   padding: 16px;
@@ -35,6 +34,7 @@
   resize: none;
   background: #fff;
 }
+
 /* =======================
    File upload dropzone
 ======================= */
@@ -81,24 +81,21 @@
 ======================= */
 .upload-container {
   position: relative;
-  width: 100%;
   margin: 40px auto;
   display: flex;
   flex-direction: column;
-  align-items: center; /* center children */
+  align-items: center;
   font-family: Arial, sans-serif;
 }
 
 .upload-container h2 {
   font-size: 2rem;
   margin: 0.2rem;
-  align-items: center;
 }
 
 .upload-container p {
   color: #555;
-  margin: 0.2rem;
-  margin-bottom: 1rem;
+  margin: 0.2rem 0.2rem 1rem;
 }
 
 .small-text {
@@ -111,7 +108,6 @@
    Process button
 ======================= */
 .process-btn {
-  margin: 0;
   background-color: #444;
   color: white;
   border: none;
@@ -129,38 +125,28 @@
 /* =======================
    Results
 ======================= */
-/* .results {
-  margin-top: 30px;
-  text-align: left;
-  width: 30vw;
-  height: 30vh;
-} */
-
 .results {
   text-align: left;
-  /* width: 30vw;
-  max-width: 1200px;
-  height: 30vh; */
   width: 40vw;
   height: 70vh;
-  overflow-y: auto; /* Enable vertical scrolling */
-  border: 1px solid #ccc; /* Optional: add a border */
-  border-radius: 6px; /* Optional: match input container style */
-  padding: 10px; /* Optional: inner spacing */
-  background: #fff; /* Optional: clean background */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
   box-sizing: border-box;
 }
+
 .apple {
   position: absolute;
   top: 5%;
   left: 0;
-  transform: translate(-0%, -0%); /* pop out left & center vertically */
-  width: 15%; /* or a percentage like 30% */
+  width: 15%;
   aspect-ratio: 16 / 9;
   background-image: url("/jihan-apple.svg");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  z-index: -1; /* behind content */
-  pointer-events: none; /* avoid blocking clicks */
+  z-index: -1;
+  pointer-events: none;
 }
