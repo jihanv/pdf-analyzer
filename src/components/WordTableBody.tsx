@@ -40,7 +40,7 @@ export default function WordTableBody() {
                             <tr key={`${word}-expanded`}>
                                 <td colSpan={2} style={{ padding: "8px", background: "#eef" }}>
                                     {lookupLoading.has(word) ? (
-                                        <div style={{ padding: "8px", color: "#666" }}>Loading definitions...</div>
+                                        <div style={{ padding: "8px", color: "#666" }}>Loading Definitions...</div>
                                     ) : definitions.length > 0 ? (
                                         <div>
                                             <strong style={{ fontSize: "1.1rem" }}>{word}</strong>

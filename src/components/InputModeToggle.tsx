@@ -6,16 +6,6 @@ export default function InputModeToggle() {
 
     return (
         <div style={{ marginBottom: "1rem" }}>
-            <label style={{ marginRight: "1rem" }}>
-                <input
-                    type="radio"
-                    name="inputMode"
-                    value="pdf"
-                    checked={inputMode === "pdf"}
-                    onChange={() => setInputMode("pdf")}
-                />
-                Upload PDF
-            </label>
             <label>
                 <input
                     type="radio"
@@ -26,6 +16,17 @@ export default function InputModeToggle() {
                 />
                 Paste Text
             </label>
+            <label style={{ marginRight: "1rem" }}>
+                <input
+                    type="radio"
+                    name="inputMode"
+                    value="pdf"
+                    checked={inputMode === "pdf"}
+                    onChange={() => setInputMode("pdf")}
+                />
+                Upload PDF
+            </label>
+
         </div>
     );
 }

@@ -18,8 +18,8 @@ export default function ResultsTable() {
                 <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
                     <thead>
                         <tr>
-                            <th style={{ textAlign: "left", borderBottom: "2px solid #ccc", padding: "8px" }}>Word</th>
-                            <th style={{ textAlign: "right", borderBottom: "2px solid #ccc", padding: "8px" }}>Count</th>
+                            <th style={{ textAlign: "left", borderBottom: "1px solid #ccc", padding: "0px" }}>Word</th>
+                            <th style={{ textAlign: "right", borderBottom: "1px solid #ccc", padding: "0px" }}>Count</th>
                         </tr>
                     </thead>
                     <WordTableBody />
