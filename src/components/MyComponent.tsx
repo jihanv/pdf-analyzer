@@ -9,18 +9,16 @@ import TextInput from "./TextInput";
 import InputModeToggle from "./InputModeToggle";
 
 export default function MyComponent() {
-
-
     const setDictionary = useDictionaryStore((state) => state.setDictionary);
     const inputMode = useDictionaryStore((state) => state.inputMode);
-
-
 
     // Load dictionary on mount
     useEffect(() => {
         async function loadDictionary() {
             try {
-                const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`);
+                const response = await fetch(
+                    `${import.meta.env.BASE_URL}dictionary.json`
+                );
                 if (!response.ok) throw new Error("Failed to load dictionary");
                 const data = await response.json();
                 setDictionary(data.dictionary);
@@ -31,22 +29,21 @@ export default function MyComponent() {
         loadDictionary();
     }, [setDictionary]);
 
-
     return (
-        <div className="upload-container">
+        <>
             <Header />
-            <InputModeToggle />
-            <div className="view">
-
-                <div className="input-container">
-                    {inputMode === "pdf" && <FileUpload />}
-                    {inputMode === "text" && <TextInput />}
-                    <div className="apple"></div>
+            <div className="upload-container">
+                <div className="view">
+                    <div className="input-container">
+                        <InputModeToggle />
+                        {inputMode === "pdf" && <FileUpload />}
+                        {inputMode === "text" && <TextInput />}
+                        {/* <div className="apple"></div> */}
+                    </div>
+                    <ResultsTable />
                 </div>
-                <ResultsTable />
-
+                <ProcessButton />
             </div>
-            <ProcessButton />
-        </div>
+        </>
     );
 }

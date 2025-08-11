@@ -1,38 +1,59 @@
+body {
+  background: #e1e8eb;
+}
+
 .view {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  height: 70vh;
+  width: 80vw;
 }
-
+.view {
+  margin: 0 auto 1rem;
+  background-color: #fff;
+  /* border-radius: 8px; */
+  display: flex;
+  /* border-top-right-radius: 9px; */
+  /* box-shadow: 0 3px 5px rgba(0, 0, 0, 0.07); */
+  /* margin-top: 40px; */
+  /* animation: intro 0.3s 0.2s backwards; */
+}
 /* =======================
    Shared input container (PDF/Text)
 ======================= */
 .input-container {
   width: 50vw;
-  height: 70vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   margin: 0 auto 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  /* border: 1px solid #ccc; */
+  /* border-radius: 8px 0px 0px 8px; */
   padding: 16px;
   background: #fdfdfd;
   box-sizing: border-box;
+  align-items: center;
 }
 
 /* =======================
    Textarea for "Paste Text"
 ======================= */
 .text-input {
-  flex: 1;
+  font-family: "Inter", sans-serif;
   width: 100%;
+  height: 100%;
   border: 2px solid #aaa;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   padding: 16px;
   font-size: 1.3rem;
   box-sizing: border-box;
   resize: none;
   background: #fff;
+}
+.text-input {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* =======================
@@ -42,20 +63,18 @@
   width: 100%;
   height: 100%;
   border: 2px dashed #aaa;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   background: #fafafa;
-  transition: background 0.2s;
-  padding: 16px;
-  box-sizing: border-box;
+  /* box-sizing: border-box; */
 }
 
 .drop-zone:hover {
-  background: #f0f0f0;
+  background: #f1f1f1;
 }
 
 /* =======================
@@ -65,7 +84,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background: #007bff;
+  background: #a71b1b;
   color: white;
   font-size: 1rem;
   cursor: pointer;
@@ -108,7 +127,7 @@
    Process button
 ======================= */
 .process-btn {
-  background-color: #444;
+  background-color: #a71b1b;
   color: white;
   border: none;
   padding: 0.5rem 0.7rem;
@@ -127,14 +146,22 @@
 ======================= */
 .results {
   text-align: left;
-  width: 40vw;
-  height: 70vh;
+  width: 30vw;
+  height: 100%;
   overflow-y: auto;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 10px;
   background: #fff;
   box-sizing: border-box;
+}
+
+.results {
+  /* flex: 1; */
+  background-color: #eff2f5;
+  /* position: relative; */
+  /* border-top-right-radius: 12px; */
+  /* border-bottom-right-radius: 8px; */
 }
 
 .apple {
@@ -149,4 +176,66 @@
   background-position: center;
   z-index: -1;
   pointer-events: none;
+}
+
+.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  height: 254px;
+  width: 100%;
+  background-color: #a71b1b;
+}
+
+header {
+  font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.first-heading {
+  font-size: 3.5rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  margin-top: 0;
+  margin-bottom: 0rem;
+  text-align: center;
+}
+.first-heading--thin {
+  font-weight: 300;
+}
+.second-heading {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  /* margin-top: 2rem; */
+  text-align: center;
+}
+
+.result-details {
+  flex: 1;
+  background-color: #eff2f5;
+  position: relative;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 8px;
+}
+
+.result-details__start-view {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.empty-heading {
+  font-size: 1em;
+  color: black;
+  margin-top: 0;
+  margin-bottom: 0rem;
+  text-align: center;
 }

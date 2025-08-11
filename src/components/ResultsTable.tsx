@@ -6,7 +6,9 @@ export default function ResultsTable() {
     const loading = useDictionaryStore((state) => state.loading);
 
     const uniqueWords = Object.keys(wordCounts).length;
-
+    if (!uniqueWords) {
+        return <EmptyResultContent />
+    }
     return (
         <div className="results">
             {uniqueWords > 0 && <p><strong>Unique words:</strong> {uniqueWords}</p>}
@@ -24,5 +26,17 @@ export default function ResultsTable() {
                 </table>
             )}
         </div>
+    );
+}
+
+export function EmptyResultContent() {
+    return (
+        <section className="result-details">
+            <div>
+                <div className="result-details__start-view empty-heading">
+                    Upload a PDF or paste some text to get all the words.
+                </div>
+            </div>
+        </section>
     );
 }
