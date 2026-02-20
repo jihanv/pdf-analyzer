@@ -1,5 +1,6 @@
 import { create } from "zustand";
-
+const LAMBDA_URL =
+  "https://wrewmxxswv36jc6v7plpr4ocpa0vndkx.lambda-url.ap-northeast-1.on.aws/";
 type DefinitionLanguage = "ja" | "en";
 
 type DictionaryStore = {
@@ -38,7 +39,7 @@ type DictionaryStore = {
   setLookupData: (
     word: string,
     lang: DefinitionLanguage,
-    data: string[]
+    data: string[],
   ) => void;
 
   // Matched variant tracking
@@ -157,15 +158,12 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
     // --- Fetch definitions based on language ---
     const fetchDefinitions = async (
       query: string,
-      lang: DefinitionLanguage
+      lang: DefinitionLanguage,
     ): Promise<string[]> => {
       if (lang === "ja") {
         // Japanese: existing API
         const response = await fetch(
-          `https://corsproxy.io/?${encodeURIComponent(
-            `https://api.excelapi.org/dictionary/enja?word=${query}`
-          )}`,
-          { headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" } }
+          `${LAMBDA_URL}?word=${encodeURIComponent(query)}&lang=ja`,
         );
         const text = await response.text();
         const cleanText = text
@@ -178,9 +176,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       } else {
         // English: dictionaryapi.dev
         const response = await fetch(
-          `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-            query
-          )}`
+          `${LAMBDA_URL}?word=${encodeURIComponent(query)}&lang=en`,
         );
         if (!response.ok) return ["No results found."];
         const data = await response.json();
@@ -233,7 +229,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       // 3. Log & store which variant worked
       if (usedVariant) {
         console.log(
-          `Lookup for "${word}" succeeded with variant "${usedVariant}".`
+          `Lookup for "${word}" succeeded with variant "${usedVariant}".`,
         );
         setLookupVariant(word, usedVariant);
       } else {
@@ -311,7 +307,7 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
           !stopwords.includes(word) &&
           dictionary.has(word) &&
           !/^\d+$/.test(word) &&
-          word.length > 3
+          word.length > 3,
       );
 
       const wordCount = new Map<string, number>();
