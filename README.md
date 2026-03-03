@@ -1,69 +1,52 @@
-# React + TypeScript + Vite
+# PDF/Text Vocabulary Extractor + Dictionary Lookup (React + Zustand)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small React/TypeScript UI that lets you **upload a PDF** or **paste text**, then:
 
-Currently, two official plugins are available:
+1. extracts words,
+2. filters them against a custom dictionary + stopwords,
+3. shows **word frequency counts**,
+4. lets you **lookup per-word definitions** (Japanese or English) inline.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## What it does
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Two input modes**
+  - **Paste Text** (textarea)
+  - **Upload PDF** (PDF-to-text in the browser)
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Word analysis**
+  - Normalizes to lowercase
+  - Strips punctuation/symbols
+  - Filters by:
+    - stopwords list
+    - your dictionary list (only words contained in it)
+    - length > 3
+    - excludes pure numbers
+  - Produces a **count per unique word**
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- **Inline dictionary lookup**
+  - Each word row has a **Lookup** toggle
+  - Expands a details panel with definitions
+  - Per-word language switch: **Japanese (`ja`) / English (`en`)**
+  - Tries simple fallback variants (plural/past/gerund/comparative, etc.) and shows the matched form as `一致形: ...` when applicable
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Tech stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- React + TypeScript
+- Zustand (global state)
+- `react-pdftotext` (PDF → text extraction in the browser)
+- A backend/proxy lookup endpoint (currently hard-coded as an AWS Lambda URL)
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## Getting started
+
+> These commands assume a typical Vite + React setup.
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
