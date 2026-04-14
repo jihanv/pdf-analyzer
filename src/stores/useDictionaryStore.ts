@@ -161,18 +161,43 @@ export const useDictionaryStore = create<DictionaryStore>((set, get) => ({
       lang: DefinitionLanguage,
     ): Promise<string[]> => {
       if (lang === "ja") {
-        // Japanese: existing API
         const response = await fetch(
           `${LAMBDA_URL}?word=${encodeURIComponent(query)}&lang=ja`,
         );
-        const text = await response.text();
-        const cleanText = text
-          .replace(/^\uFEFF/, "")
-          .replace(/[‘’]/g, "'")
-          .replace(/[“”]/g, '"')
-          .replace(/\u3000/g, " ")
-          .trim();
-        return cleanText.length > 0 ? [cleanText] : [];
+
+        if (!response.ok) return ["No results found."];
+
+        const data = await response.json();
+
+        if (!data?.success) return ["No results found."];
+
+        const results: string[] = [];
+
+        if (typeof data.definition === "string" && data.definition.trim()) {
+          results.push(data.definition.trim());
+        }
+
+        if (Array.isArray(data.fallbackEntries)) {
+          for (const entry of data.fallbackEntries) {
+            if (entry?.headword) {
+              results.push(`**${entry.headword}**`);
+            }
+
+            if (
+              Array.isArray(entry?.definitions) &&
+              entry.definitions.length > 0
+            ) {
+              results.push(...entry.definitions.filter(Boolean));
+            } else if (
+              typeof entry?.summary === "string" &&
+              entry.summary.trim()
+            ) {
+              results.push(entry.summary.trim());
+            }
+          }
+        }
+
+        return results.length > 0 ? results : ["No results found."];
       } else {
         // English: dictionaryapi.dev
         const response = await fetch(
